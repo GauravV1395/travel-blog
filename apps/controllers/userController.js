@@ -5,13 +5,13 @@ const { authenticateUser } = require('../middlewares/authentication');
 const { authorizeUser } = require('../middlewares/authentication');
 const _ = require('lodash');
 const { Blog } = require('../models/blog');
-const { validateID} = require('../middlewares/utilities');
+const { validateID } = require('../middlewares/utilities');
 
 
 
 // to create the user.
 
-router.post('/', (req,res) => {
+router.post('/', (req, res) => {
     let body = _.pick(req.body, ['userName', 'password', 'email', 'mobileNumber', 'about']);
     let user = new User(body);
     user.save().then((user) => {
@@ -25,7 +25,7 @@ router.post('/', (req,res) => {
 
 // to delete the user
 
-router.delete('/logout', authenticateUser, (req,res) => {
+router.delete('/logout', authenticateUser, (req, res) => {
     let user = req.locals.user;
     let token = req.locals.token;
     let activeToken = user.tokens.find(function (inDbToken) {
@@ -41,7 +41,7 @@ router.delete('/logout', authenticateUser, (req,res) => {
 
 // to get all the blogs written by the user.
 
-router.get('/blogs', authenticateUser, (req,res) => {
+router.get('/blogs', authenticateUser, (req, res) => {
     res.send(req.locals.user.blogs);
 });
 
@@ -70,7 +70,7 @@ router.post('/blogs', authenticateUser, (req, res) => {
 router.get('/blogs/:id', validateID, authenticateUser, (req, res) => {
     let id = req.params.id;
     let user = req.locals.user;
-    let inBlog = user.blogs.find(function(blog) {
+    let inBlog = user.blogs.find(function (blog) {
         return blog.id == id;
     });
     res.send(inBlog);
@@ -83,7 +83,7 @@ router.put('/blogs/:id', validateID, authenticateUser, (req, res) => {
     let blogId = req.params.id;
     let user = req.locals.user;
     let body = req.body;
-    let inblogs = user.blogs.find(function(blog){
+    let inblogs = user.blogs.find(function (blog) {
         return blog._id == blogId;
     })
     console.log(inblogs)
@@ -103,26 +103,45 @@ router.put('/blogs/:id', validateID, authenticateUser, (req, res) => {
     });
 });
 
+router.put('/follow/:id', authenticateUser, (req, res) => {
+    let id = req.params.id;
+    let requestUser = req.locals.user.userName;
+    if (!id == req.locals.user._id) {
+        let request = `${requestUser} has started following you.`;
+        User.findByIdAndUpdate({ _id: id }, { $push: { notifications: request } }).then((user) => {
+            User.findByIdAndUpdate({ _id: id }, { $push: { followers: requestUser } }).then((user) => {
+                User.findOneAndUpdate({ userName: requestUser }, { $push: { notifications: `you have started following ${user.userName}.` } }).then((user) => {
+                    User.findOneAndUpdate({ userName: requestUser }, { $push: { following: `you have started following ${user.userName}.` } }).then((user) => {
+                        res.send({
+                            notice: 'successfully sent the request.'
+                        });
+                    });
+                });
+            });
+        });
+    }
+});
+
 //to delete the blog
 
-router.delete('/blogs/:id', validateID, authenticateUser, authorizeUser, (req,res) => {
-    let blogId = req.params.id;
-    let user = req.locals.user;
-    user.blogs.id(blogId).remove();
-    user.save().then((user) => {
-        res.send();
-    })
-    Blog.findByIdAndRemove(blogId).then((blog) => {
-        res.send({
-            blog,
-            notice: "successfully removed the blog."
-        });
-    }).catch((err) => {
-        res.send(err);
-    });
-});
+// router.delete('/blogs/:id', validateID, authenticateUser, authorizeUser, (req,res) => {
+//     let blogId = req.params.id;
+//     let user = req.locals.user;
+//     user.blogs.id(blogId).remove();
+//     user.save().then((user) => {
+//         res.send();
+//     })
+//     Blog.findByIdAndRemove(blogId).then((blog) => {
+//         res.send({
+//             blog,
+//             notice: "successfully removed the blog."
+//         });
+//     }).catch((err) => {
+//         res.send(err);
+//     });
+// });
 
 
 module.exports = {
-    userController : router
+    userController: router
 }

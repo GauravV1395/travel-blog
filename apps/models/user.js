@@ -62,7 +62,19 @@ const userSchema = new Schema({
         default: 'user'
     },
 
-    blogs : [blogSchema]
+    blogs : [blogSchema],
+
+    following : [{
+        type : String
+    }],
+
+    followers : [{
+        type: String
+    }],
+
+    notifications : [{
+        type : String
+    }]
 
 }) 
 

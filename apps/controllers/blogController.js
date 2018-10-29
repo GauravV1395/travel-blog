@@ -17,16 +17,16 @@ router.get('/', (req, res) => {
 
 // admin can delete the blog
 
-router.delete('/:id', authenticateUser, authorizeUser, (req, res) => {
-    let id = req.params.id;
-    let user = req.locals.user;
-    console.log(user);
-    Blog.findByIdAndRemove(id).then((blog) => {
-        res.send({ notice: "successfully removed." });
-    }).catch((err) => {
-        res.send(err);
-    });
-});
+// router.delete('/:id', authenticateUser, authorizeUser, (req, res) => {
+//     let id = req.params.id;
+//     let user = req.locals.user;
+//     console.log(user);
+//     Blog.findByIdAndRemove(id).then((blog) => {
+//         res.send({ notice: "successfully removed." });
+//     }).catch((err) => {
+//         res.send(err);
+//     });
+// });
 
 module.exports = {
     blogController: router
