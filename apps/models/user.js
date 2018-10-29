@@ -73,7 +73,8 @@ const userSchema = new Schema({
     }],
 
     notifications : [{
-        type : String
+        type : String,
+        default : Date.now
     }]
 
 }) 

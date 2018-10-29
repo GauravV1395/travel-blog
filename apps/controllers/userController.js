@@ -103,10 +103,21 @@ router.put('/blogs/:id', validateID, authenticateUser, (req, res) => {
     });
 });
 
-router.put('/follow/:id', authenticateUser, (req, res) => {
+// to follow the user.
+
+
+router.put('/follow/:id', authenticateUser, validateID, (req, res) => {
     let id = req.params.id;
     let requestUser = req.locals.user.userName;
-    if (!id == req.locals.user._id) {
+    let requesterId = req.locals.user.id;
+    console.log(requesterId);
+    console.log(id);
+    if (id === requesterId) {
+        res.send({
+            notice: 'The user is already being followed by you.'
+        });
+
+    } else {
         let request = `${requestUser} has started following you.`;
         User.findByIdAndUpdate({ _id: id }, { $push: { notifications: request } }).then((user) => {
             User.findByIdAndUpdate({ _id: id }, { $push: { followers: requestUser } }).then((user) => {
@@ -120,6 +131,17 @@ router.put('/follow/:id', authenticateUser, (req, res) => {
             });
         });
     }
+});
+
+// to unfollow the user.
+
+
+router.put('/unfollow/:id', authenticateUser, (req, res) => {
+    let id = req.params.id;
+    let requestUser = req.locals.user._id;
+    User.findById(id).then((user) => {
+        console.log(user);
+    });
 });
 
 //to delete the blog
