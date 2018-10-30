@@ -121,8 +121,8 @@ router.put('/follow/:id', authenticateUser, validateID, (req, res) => {
         let request = `${requestUser} has started following you.`;
         User.findByIdAndUpdate({ _id: id }, { $push: { notifications: request } }).then((user) => {
             User.findByIdAndUpdate({ _id: id }, { $push: { followers: requestUser } }).then((user) => {
-                User.findOneAndUpdate({ userName: requestUser }, { $push: { notifications: `you have started following ${user.userName}.` } }).then((user) => {
-                    User.findOneAndUpdate({ userName: requestUser }, { $push: { following: `you have started following ${user.userName}.` } }).then((user) => {
+                User.findOneAndUpdate({ userName: requestUser }, { $push: { notifications: `you have started following ${user.userName}.` } }).then((ser2) => {
+                    User.findOneAndUpdate({ userName: requestUser }, { $push: { following:  user.userName } }).then((user) => {
                         res.send({
                             notice: 'successfully sent the request.'
                         });
@@ -136,32 +136,60 @@ router.put('/follow/:id', authenticateUser, validateID, (req, res) => {
 // to unfollow the user.
 
 
+
 router.put('/unfollow/:id', authenticateUser, (req, res) => {
+    let madeRequest = req.locals.user;
     let id = req.params.id;
-    let requestUser = req.locals.user._id;
+    let requestUser = req.locals.user.userName;
+    let following = req.locals.user.following;
+    console.log(following);
     User.findById(id).then((user) => {
-        console.log(user);
+        let followers = user.followers;
+        followers.forEach(function(n,index){
+            if (n == requestUser) {
+                followers.splice(index,1);
+            }
+        });
+        user.save().then((user) => {
+            res.send();
+        });
+        User.findByIdAndUpdate({_id : id}, {$push: {notifications: `you have been unfollowed by ${requestUser}.`}}).then((user) => {
+            following.forEach(function(n,index) {
+                console.log(n, user.userName);
+                if (n == user.userName) {
+                    following.splice(index,1);
+                }
+            });
+            madeRequest.save().then((user) => {
+                res.send();
+            });
+            User.findOneAndUpdate({userName : requestUser}, {$push: {notifications: `you have stopped following ${user.userName}.`}}).then((user) => {
+                res.send({
+                    notice : "successfully unfollwed the user."
+                });
+            });
+        });
     });
 });
 
 //to delete the blog
 
-// router.delete('/blogs/:id', validateID, authenticateUser, authorizeUser, (req,res) => {
-//     let blogId = req.params.id;
-//     let user = req.locals.user;
-//     user.blogs.id(blogId).remove();
-//     user.save().then((user) => {
-//         res.send();
-//     })
-//     Blog.findByIdAndRemove(blogId).then((blog) => {
-//         res.send({
-//             blog,
-//             notice: "successfully removed the blog."
-//         });
-//     }).catch((err) => {
-//         res.send(err);
-//     });
-// });
+router.delete('/blogs/:id', validateID, authenticateUser, authorizeUser, (req,res) => {
+    let blogId = req.params.id;
+    let user = req.locals.user;
+    user.blogs.id(blogId).remove();
+    user.save().then((user) => {
+        res.send();
+    })
+    Blog.findByIdAndRemove(blogId).then((blog) => {
+        res.send({
+            blog,
+            notice: "successfully removed the blog."
+        });
+    }).catch((err) => {
+        res.send(err);
+    });
+});
 
 
 module.exports = {
